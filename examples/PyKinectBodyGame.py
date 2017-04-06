@@ -7,11 +7,78 @@ import _ctypes
 import pygame
 import sys
 
+
+
+
+
 if sys.hexversion >= 0x03000000:
     import _thread as thread
 else:
     import thread
 
+
+
+
+
+import SimpleHTTPServer
+import SocketServer
+import threading
+#!/usr/bin/python
+from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+from threading import Thread
+PORT_NUMBER = 8080
+
+
+KEEP_RUNNING= True
+
+def ServerThread(server,ServerConnectionInst):
+    #while keep_running():
+    while ServerConnectionInst.Running:
+        server.handle_request();
+
+
+def dumbthread(myHandler):
+    count = 1;
+    while(1):
+        count = count +1;
+        myHandler.s = str(count);
+
+def keep_running():
+    return KEEP_RUNNING
+
+#This class will handles any incoming request from
+#the browser 
+class myHandler(BaseHTTPRequestHandler):
+    #Handler for the GET requests
+    s = "Hallo welt";
+    img = [None]*
+          
+          
+    def myHandler(self,string):
+        self.s = string;
+        
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type','text/html')
+        self.end_headers()
+        # Send the html message
+        self.wfile.write(self.s)
+        self.wfile.write(self.img)
+        return
+    def rewrite(self,disp):
+        self.s = disp;
+
+class ServerConnection():
+    Running = True;
+    
+    def lock(self):
+        self.Running = False;
+    def open(self):
+        self.Running = True;
+    
+    def getlock():
+        return Running;
+    
 # colors for drawing different bodies 
 SKELETON_COLORS = [pygame.color.THECOLORS["red"], 
                   pygame.color.THECOLORS["blue"], 
@@ -118,59 +185,79 @@ class BodyGameRuntime(object):
 
     def run(self):
         # -------- Main Program Loop -----------
+        server = HTTPServer(('141.19.87.118', PORT_NUMBER), myHandler)
+        print 'Started httpserver on port ' , PORT_NUMBER
+        ServerConnectionInst = ServerConnection();
+  
+        process = Thread(target=ServerThread,args=[server,ServerConnectionInst])
+        process.start();
+                     
+        cnt = 0;
         while not self._done:
             # --- Main event loop
+            server = HTTPServer(('141.19.87.118', 8080), myHandler)
             for event in pygame.event.get(): # User did something
                 if event.type == pygame.QUIT: # If user clicked close
                     self._done = True # Flag that we are done so we exit this loop
-
+                    ServerConnectionInst.lock();
                 elif event.type == pygame.VIDEORESIZE: # window resized
                     self._screen = pygame.display.set_mode(event.dict['size'], 
                                                pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
                     
             # --- Game logic should go here
 
-            # --- Getting frames and drawing  
-            # --- Woohoo! We've got a color frame! Let's fill out back buffer surface with frame's data 
-            if self._kinect.has_new_color_frame():
-                frame = self._kinect.get_last_color_frame()
-                self.draw_color_frame(frame, self._frame_surface)
-                frame = None
-
-            # --- Cool! We have a body frame, so can get skeletons
-            if self._kinect.has_new_body_frame(): 
-                self._bodies = self._kinect.get_last_body_frame()
-
-            # --- draw skeletons to _frame_surface
-            if self._bodies is not None: 
-                for i in range(0, self._kinect.max_body_count):
-                    body = self._bodies.bodies[i]
-                    if not body.is_tracked: 
-                        continue 
-                    
-                    joints = body.joints 
-                    # convert joint coordinates to color space 
-                    joint_points = self._kinect.body_joints_to_color_space(joints)
-                    self.draw_body(joints, joint_points, SKELETON_COLORS[i])
-
-            # --- copy back buffer surface pixels to the screen, resize it if needed and keep aspect ratio
-            # --- (screen size may be different from Kinect's color frame size) 
-            h_to_w = float(self._frame_surface.get_height()) / self._frame_surface.get_width()
-            target_height = int(h_to_w * self._screen.get_width())
-            surface_to_draw = pygame.transform.scale(self._frame_surface, (self._screen.get_width(), target_height));
-            self._screen.blit(surface_to_draw, (0,0))
-            surface_to_draw = None
-            pygame.display.update()
-
-            # --- Go ahead and update the screen with what we've drawn.
-            pygame.display.flip()
-
-            # --- Limit to 60 frames per second
-            self._clock.tick(60)
-
+            try:
+               # --- Getting frames and drawing  
+                # --- Woohoo! We've got a color frame! Let's fill out back buffer surface with frame's data 
+                if self._kinect.has_new_color_frame():
+                    frame = self._kinect.get_last_color_frame()
+                   # myHandler.img = frame
+                    myHandler.s = str(len(frame)) 
+                    myHandler.img = frame
+                    print myHandler.img
+                    #myHandler.s = "hello";
+                    self.draw_color_frame(frame, self._frame_surface)
+                    frame = None
+    
+                # --- Cool! We have a body frame, so can get skeletons
+                if self._kinect.has_new_body_frame(): 
+                    self._bodies = self._kinect.get_last_body_frame()
+    
+                # --- draw skeletons to _frame_surface
+                if self._bodies is not None: 
+                    for i in range(0, self._kinect.max_body_count):
+                        body = self._bodies.bodies[i]
+                        if not body.is_tracked: 
+                            continue 
+                        
+                        joints = body.joints 
+                        # convert joint coordinates to color space 
+                        joint_points = self._kinect.body_joints_to_color_space(joints)
+                        self.draw_body(joints, joint_points, SKELETON_COLORS[i])
+    
+                # --- copy back buffer surface pixels to the screen, resize it if needed and keep aspect ratio
+                # --- (screen size may be different from Kinect's color frame size) 
+                h_to_w = float(self._frame_surface.get_height()) / self._frame_surface.get_width()
+                target_height = int(h_to_w * self._screen.get_width())
+                surface_to_draw = pygame.transform.scale(self._frame_surface, (self._screen.get_width(), target_height));
+                self._screen.blit(surface_to_draw, (0,0))
+                surface_to_draw = None
+                pygame.display.update()
+    
+                # --- Go ahead and update the screen with what we've drawn.
+                pygame.display.flip()
+    
+                # --- Limit to 60 frames per second
+                self._clock.tick(120)
+            except KeyboardInterrupt:
+                self._done = True
+                ServerConnectionInst.lock();
         # Close our Kinect sensor, close the window and quit.
         self._kinect.close()
         pygame.quit()
+        
+        process.join();
+
 
 
 __main__ = "Kinect v2 Body Game"
