@@ -16,10 +16,6 @@ if sys.hexversion >= 0x03000000:
 else:
     import thread
 
-
-
-
-
 import SimpleHTTPServer
 import SocketServer
 import threading
@@ -51,7 +47,7 @@ def keep_running():
 class myHandler(BaseHTTPRequestHandler):
     #Handler for the GET requests
     s = "Hallo welt";
-    img = [None]*
+    
           
           
     def myHandler(self,string):
@@ -63,7 +59,7 @@ class myHandler(BaseHTTPRequestHandler):
         self.end_headers()
         # Send the html message
         self.wfile.write(self.s)
-        self.wfile.write(self.img)
+        self.wfile.write(self.img.tolist())
         return
     def rewrite(self,disp):
         self.s = disp;
@@ -213,8 +209,9 @@ class BodyGameRuntime(object):
                     frame = self._kinect.get_last_color_frame()
                    # myHandler.img = frame
                     myHandler.s = str(len(frame)) 
-                    myHandler.img = frame
-                    print myHandler.img
+                    myHandler.img = frame[::1]
+                    print "running"
+                    #print myHandler.img
                     #myHandler.s = "hello";
                     self.draw_color_frame(frame, self._frame_surface)
                     frame = None
@@ -256,8 +253,8 @@ class BodyGameRuntime(object):
         self._kinect.close()
         pygame.quit()
         
-        process.join();
-
+        process.join(0.1);
+     #   process.terminate();
 
 
 __main__ = "Kinect v2 Body Game"
