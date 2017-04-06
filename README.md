@@ -6,6 +6,11 @@ Only color, depth, body and body index frames are supported in this version.
 PyKinectBodyGame is a sample game. It demonstrates how to use Kinect color and body frames.
 
 
+## Changes to the original repo (UNDER DEVELOPMENT!)
+
+In this repo there will be a REST protocol implemented for pulling the data. 
+
+
 ## Prerequisites
 
 The easiest way to get most of the pre-requisites is to use Anaconda which includes NumPy.  You'll then need to pip install comtypes.  The PyKinectBodyGame sample requires PyGame which needs to be manually installed.
