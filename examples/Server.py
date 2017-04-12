@@ -1,3 +1,5 @@
+#! python2.7
+
 from pykinect2 import PyKinectV2
 from pykinect2.PyKinectV2 import *
 from pykinect2 import PyKinectRuntime
@@ -18,9 +20,9 @@ if sys.hexversion >= 0x03000000:
 else:
     import thread
 
-import SimpleHTTPServer
-import SocketServer
-import threading
+#import SimpleHTTPServer
+#import SocketServer
+#import threading
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 from threading import Thread
