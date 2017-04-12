@@ -7,7 +7,7 @@ import _ctypes
 import pygame
 import sys
 import numpy as np
-
+import time
 
 
 import socket
@@ -110,7 +110,7 @@ class myHandler(BaseHTTPRequestHandler):
         else:
             self.wfile.write(self.RGBmessage)
     
-        
+        self.wfile.write(",end")
         return
     
     def rewrite(self,disp):
@@ -127,6 +127,12 @@ class ServerConnection():
     def getlock():
         return Running;
     
+    
+def block_delete(a, n, m):  #keep n, remove m
+    mask = np.tile(np.r_[np.ones(n), np.zeros(m)].astype(bool), a.size // (n + m) + 1)[:a.size]
+    return a[mask]
+
+
 # colors for drawing different bodies 
 SKELETON_COLORS = [pygame.color.THECOLORS["red"], 
                   pygame.color.THECOLORS["blue"], 
@@ -240,9 +246,7 @@ class BodyGameRuntime(object):
   
         process = Thread(target=ServerThread,args=[server,ServerConnectionInst])
         process.start();
-                     
-                     
-                     
+        tim_ = [];
         ComClass = Communication(3840,2160);
         cnt = 0;
         while not self._done:
@@ -255,31 +259,32 @@ class BodyGameRuntime(object):
                 elif event.type == pygame.VIDEORESIZE: # window resized
                     self._screen = pygame.display.set_mode(event.dict['size'], 
                                                pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
-                    
- 
             try:
+                start = time.time()
                # --- Getting frames and drawing  
                 # --- Woohoo! We've got a color frame! Let's fill out back buffer surface with frame's data 
                 if self._kinect.has_new_color_frame():
                     frame = self._kinect.get_last_color_frame()
                     self.draw_color_frame(frame, self._frame_surface)
-                    tempRGB = ['{"type": "Kinect v2", "RGBWidth": ' + str(ComClass.RGBwidth) + '"RGBHeight": ' + str(ComClass.RGBheight) +'"RGBImage":']
+                    tempRGB = ['{"type": "Kinect v2", "RGBWidth": ' + str(ComClass.RGBwidth) + "," + ' "RGBHeight": ' + str(ComClass.RGBheight) + "," + '"RGBImage": ']
                     #delete alpha channel
-                    frame = np.delete(frame,np.arange(4,frame.size,4))
-                    myHandler.RGBmessage = tempRGB + frame.tolist();#frame.tolist()
-                    frame = None;
-                if self._kinect.has_new_depth_frame():
-     
-                    depthframe = self._kinect.get_last_depth_frame();
-                    tempDEPTH = ['"DepthWidth": ' + str(ComClass.DepthWidth) + '"DepthHeight": ' + str(ComClass.DepthHeight) +'"DepthImage":']
-                    myHandler.Depthmessage = tempDEPTH + depthframe.tolist()
-
+             #       frame = np.delete(frame,np.arange(4,frame.size,4))
+                   # frame = block_delete(frame,9,3)
+              #      frame = block_delete(frame,3,3)
                     
-                # --- Cool! We have a body frame, so can get skeletons
-                if self._kinect.has_new_body_frame(): 
-                    self._bodies = self._kinect.get_last_body_frame()
-                    print self._bodies.bodies.all()
-                # --- draw skeletons to _frame_surface
+                    myHandler.RGBmessage = tempRGB + frame.tolist();#frame.tolist()
+               #     myHandler.RGBmessage = frame.tolist();
+                    frame = None;
+#                if self._kinect.has_new_depth_frame():   
+#                    depthframe = self._kinect.get_last_depth_frame();
+#                    tempDEPTH = ['"DepthWidth": ' + str(ComClass.DepthWidth) + '"DepthHeight": ' + str(ComClass.DepthHeight) +'"DepthImage":']
+#                    myHandler.Depthmessage = tempDEPTH + depthframe.tolist()
+#                    
+#                # --- Cool! We have a body frame, so can get skeletons
+#                if self._kinect.has_new_body_frame(): 
+#                    self._bodies = self._kinect.get_last_body_frame()
+#                    print self._bodies.bodies.all()
+#                # --- draw skeletons to _frame_surface
                 if self._bodies is not None: 
                     for i in range(0, self._kinect.max_body_count):
                         body = self._bodies.bodies[i]
@@ -302,16 +307,21 @@ class BodyGameRuntime(object):
     
                 # --- Go ahead and update the screen with what we've drawn.
                 pygame.display.flip()
-    
+                    
                 # --- Limit to 60 frames per second
                 self._clock.tick(120)
+                end = time.time() - start
+                print("Time :  " + str(end))
+                if end > 0.05:
+                    tim_.append(time.time() - start)
+                    
             except KeyboardInterrupt:
                 self._done = True
                 ServerConnectionInst.lock();
         # Close our Kinect sensor, close the window and quit.
         self._kinect.close()
         pygame.quit()
-        
+        print(sum(tim_)/float(len(tim_)))
         process.join(0.00000001);
      #   process.terminate();
 
