@@ -8,6 +8,11 @@ import ctypes
 import _ctypes
 import pygame
 import sys
+
+if sys.version_info[0] > 3:
+    raise Exception("Python 2.7 is required. Higher version are currently not supported")
+
+
 import numpy as np
 import time
 
