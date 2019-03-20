@@ -1,5 +1,7 @@
 # PyKinect2
 
+Please note that this is a copy of the original repo, however the old one was not maintained and the PyPi package was not updated anymore, there fore I created this repo.
+
 Enables writing Kinect applications, games, and experiences using Python.  Inspired by the original [PyKinect project on CodePlex](http://pytools.codeplex.com/wikipage?title=PyKinect).
 
 Only color, depth, body and body index frames are supported in this version. 
