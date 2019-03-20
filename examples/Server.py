@@ -248,7 +248,7 @@ class BodyGameRuntime(object):
     def run(self):
         # -------- Main Program Loop -----------
         server = HTTPServer((socket.gethostbyname(socket.gethostname()), PORT_NUMBER), myHandler)
-        print 'Started httpserver on port ' , PORT_NUMBER
+        print('Started httpserver on port ' , PORT_NUMBER)
         ServerConnectionInst = ServerConnection();
   
         process = Thread(target=ServerThread,args=[server,ServerConnectionInst])
